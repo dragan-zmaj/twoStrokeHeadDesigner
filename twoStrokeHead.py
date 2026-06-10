@@ -80,7 +80,7 @@ def calcHead(
     
     # Convert to mm for output
     return headDimensions(
-        pistonCrownDiameter=2e3 * pistonCrownRadius,
+        pistonCrownRadius=1e3 * pistonCrownRadius,
         chamberWidth=1e3 * chamberWidth,
         ellipsoidHeight=1e3 * ellipsoidHeight,
         chamberHeight=1e3 * chamberHeight
