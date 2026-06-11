@@ -7,50 +7,51 @@ This document covers the prerequisites and setup commands needed to run the Comb
 - Ubuntu distribution installed from Microsoft Store with WSL2
 - Docker Desktop
 - FreeCAD docker Client
+https://wiki.freecad.org/index.php?title=FreeCAD_Docker_CLI_mode/en&oldid=1093735
 
-### Step 1: WSL2 Installation
+## Step 1: WSL2 Installation
 - install ubuntu from microsoft store
 https://apps.microsoft.com/detail/9PDXGNCFSCZV?hl=en-us&gl=RS&ocid=pdpshare
-# powershell
-# Check WSL version
+### powershell
+### Check WSL version
 wsl -l -v
 
-# Ensure WSL2 is default (if not already)
+### Ensure WSL2 is default (if not already)
 wsl --set-default-version 2
 
-# If Ubuntu shows version 1, convert it:
+### If Ubuntu shows version 1, convert it:
 wsl --set-version Ubuntu 2
 
-### Step 2: Install Docker Desktop
+## Step 2: Install Docker Desktop
 - Download Docker Desktop for Windows (AMD64) from docker.com
 - Run the installer
 - Important: Check "Use WSL 2 instead of Hyper-V" during installation
 - Restart your PC when prompted
 
-### Step 3: Configure Docker Desktop for WSL
+## Step 3: Configure Docker Desktop for WSL
 - Launch Docker Desktop
 - Go to Settings → Resources → WSL Integration
 - Enable "Enable integration with my default WSL distro"
 - Enable integration for Ubuntu
 - Click "Apply & Restart"
 
-### Step 4: Verify Docker in Ubuntu Terminal
+## Step 4: Verify Docker in Ubuntu Terminal
 - Open Ubuntu terminal
 
 docker --version
 
 docker run hello-world
 
-### Step 5: Pull the FreeCAD Docker Image
+## Step 5: Pull the FreeCAD Docker Image
 
 docker pull amrit3701/freecad-cli:latest
 
-### Step 6: Run FreeCAD
+## Step 6: Run FreeCAD
 
 docker run --rm amrit3701/freecad-cli:latest FreeCADCmd --version
 docker run -it amrit3701/freecad-cli:latest bash
 
-### Step 7: Run your script
-# this should be run from inside git repo in WSL2 environment
+## Step 7: Run your script
+### this should be run from inside git repo in WSL2 environment
 docker run --rm -v "$PWD":/workspace -w /workspace amrit3701/freecad-cli:latest FreeCADCmd draw.py
 
