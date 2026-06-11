@@ -4,25 +4,27 @@ from dataclasses import dataclass, asdict
 
 @dataclass
 class headDimensions:
-    pistonCrownDiameter: float
+    pistonCrownRadius: float
+    pistonCrownAngle: float
+    squishBandAngle: float
     chamberWidth: float
     ellipsoidHeight: float
     chamberHeight: float
 
 def calcHead(
-    bore: float = 42e-3,
+    bore: float = 42,
     trappedCompressionRatio: float = 9,
-    pistonCrownHeight: float = 1.5e-3,
+    pistonCrownHeight: float = 1.5,
     squishBandAreaRatio: float = 0.5,
-    squishBandDistance: float = 0.5e-3,
-    exhaustX: float = 25.7e-3,
+    squishBandDistance: float = 0.5,
+    exhaustX: float = 25.7,
     sparkPlugVolume: float = 0,
-    sparkPlugDiameter: float = 10e-3
+    sparkPlugDiameter: float = 10
 ) -> headDimensions:
     """
     Calculate combustion head geometry for two-stroke engines.
     
-    All dimensions in meters (SI units).
+    All dimensions in milimeters.
     """
     
     sparkPlugRadius = sparkPlugDiameter / 2
@@ -77,13 +79,14 @@ def calcHead(
     chamberHeight = np.sqrt(
         ellipsoidHeight**2 - (sparkPlugRadius**2 * ellipsoidHeight**2) / (pistonCrownRadius * np.sin(squishBandAngle))**2
     )
-    
-    # Convert to mm for output
+
     return headDimensions(
-        pistonCrownRadius=1e3 * pistonCrownRadius,
-        chamberWidth=1e3 * chamberWidth,
-        ellipsoidHeight=1e3 * ellipsoidHeight,
-        chamberHeight=1e3 * chamberHeight
+        pistonCrownRadius,
+        pistonCrownAngle,
+        squishBandAngle,
+        chamberWidth,
+        ellipsoidHeight,
+        chamberHeight
     )
 
 
@@ -93,7 +96,9 @@ if __name__ == "__main__":
     
     if result:
         print("\n=== Combustion Head Dimensions ===")
-        print(f"Piston Crown Diameter: {result.pistonCrownDiameter:.3f} mm")
-        print(f"Chamber Width:          {result.chamberWidth:.3f} mm")
-        print(f"Ellipsoid Height:       {result.ellipsoidHeight:.3f} mm")
-        print(f"Chamber Height:         {result.chamberHeight:.3f} mm")
+        print(f"pistonCrownRadius = {result.pistonCrownRadius:.3f}")
+        print(f"pistonCrownAngle = {result.pistonCrownAngle:.3f}")
+        print(f"squishBandAngle = {result.squishBandAngle:.3f}")
+        print(f"chamberWidth = {result.chamberWidth:.3f}")
+        print(f"ellipsoidHeight = {result.ellipsoidHeight:.3f}")
+        print(f"chamberHeight = {result.chamberHeight:.3f}")
