@@ -82,6 +82,7 @@ sketch = body.newObject("Sketcher::SketchObject", "Sketch")
 sketch.AttachmentSupport = (doc.getObject("Origin"), ["XZ_Plane"])
 sketch.MapMode = "FlatFace"
 
+
 # Add an squish band arc on the right side of the sketch
 arc1 = Part.ArcOfCircle(
     Part.Circle(App.Vector(0,0,0), App.Vector(0,0,1), pistonCrownRadius),
@@ -89,9 +90,10 @@ arc1 = Part.ArcOfCircle(
     (np.pi/2 - squishBandAngle)
 )
 sketch.addGeometry([arc1], False)
-
 # Constrain arc endpoint to origin
 sketch.addConstraint(Sketcher.Constraint('Coincident', 0, 3, -1, 1))
+del arc1
+
 
 # Add a squish band arc on the left side of the sketch
 arc2 = Part.ArcOfCircle(
@@ -102,6 +104,7 @@ arc2 = Part.ArcOfCircle(
 sketch.addGeometry([arc2], False)
 # Constrain arc endpoint to origin
 sketch.addConstraint(Sketcher.Constraint('Coincident', 1, 3, -1, 1))
+del arc2
 
 
 # Add an ellipse representing the combustion chamber cross-section without spark plug cutout
@@ -113,6 +116,8 @@ ellipse = Part.Ellipse(
 sketch.addGeometry([ellipse], False)
 sketch.exposeInternalGeometry(2)
 sketch.addConstraint(Sketcher.Constraint('PointOnObject', 2, 3, -2))
+del ellipse
+
 
 # Cut out lower part of the ellipse
 y = pistonCrownRadius * np.cos(squishBandAngle) - chamberHeight
@@ -120,6 +125,30 @@ x = chamberWidth * np.sqrt(1 - (chamberHeight/ellipsoidHeight)**2)
 sketch.trim(2, App.Vector(-x, y, 0))
 sketch.trim(2, App.Vector(x, y, 0))
 del x, y
+
+
+# Draw a line where spark enters the chamber
+y = pistonCrownRadius * np.cos(squishBandAngle) + ellipsoidHeight*np.sqrt(1 - (sparkPlugRadius/chamberWidth)**2)
+line = Part.LineSegment(
+    App.Vector(-sparkPlugRadius, y, 0),
+    App.Vector(sparkPlugRadius, y, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('PointOnObject', 3, 1, 2))
+constraintList.append(Sketcher.Constraint('PointOnObject', 3, 2, 2))
+constraintList.append(Sketcher.Constraint('Horizontal', 3))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+del line, constraintList, y
+
+
+# Trim the ellipse above the spark plug line
+y = pistonCrownRadius * np.cos(squishBandAngle) + ellipsoidHeight
+sketch.trim(2, App.Vector(0, y, 0))
+del y
 
 doc.recompute()
 

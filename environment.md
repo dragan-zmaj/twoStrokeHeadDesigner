@@ -52,5 +52,5 @@ docker run -it amrit3701/freecad-cli:latest bash
 
 ### Step 7: Run your script
 # this should be run from inside git repo in WSL2 environment
-docker run --rm -v "$PWD":/workspace -w /workspace amrit3701/freecad-cli:latest FreeCADCmd your_script.py
+docker run --rm -v "$PWD":/workspace -w /workspace amrit3701/freecad-cli:latest FreeCADCmd draw.py
 

@@ -10,6 +10,7 @@ class headDimensions:
     chamberWidth: float
     ellipsoidHeight: float
     chamberHeight: float
+    sparkPlugRadius: float
 
 def calcHead(
     bore: float = 42,
@@ -86,7 +87,8 @@ def calcHead(
         squishBandAngle,
         chamberWidth,
         ellipsoidHeight,
-        chamberHeight
+        chamberHeight,
+        sparkPlugRadius
     )
 
 
@@ -102,3 +104,4 @@ if __name__ == "__main__":
         print(f"chamberWidth = {result.chamberWidth:.3f}")
         print(f"ellipsoidHeight = {result.ellipsoidHeight:.3f}")
         print(f"chamberHeight = {result.chamberHeight:.3f}")
+        print(f"sparkPlugRadius = {result.sparkPlugRadius:.3f}")
