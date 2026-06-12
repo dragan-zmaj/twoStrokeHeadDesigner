@@ -186,7 +186,7 @@ for constraint in constraintList:
 # Draw outer part of head insert
 y = pistonCrownRadius * math.cos(pistonCrownAngle) + outerHeadHeight
 x1 = -outerHeadDiameter/2
-x2 = -outerHeadDiameter/2 + sparkPlugSeatDiameter/2
+x2 = -sparkPlugSeatDiameter/2
 line = Part.LineSegment(
     App.Vector(x1, y, 0),
     App.Vector(x2, y, 0)
@@ -198,8 +198,38 @@ constraintList.append(Sketcher.Constraint('Horizontal', 7))
 
 for constraint in constraintList:
     sketch.addConstraint(constraint)
-    
 
+# Draw outer part of head insert
+y1 = pistonCrownRadius * math.cos(pistonCrownAngle) + outerHeadHeight
+y2 = pistonCrownRadius * math.cos(pistonCrownAngle) + ellipsoidHeight + sparkPlugThreadLength
+x = -sparkPlugSeatDiameter/2
+line = Part.LineSegment(
+    App.Vector(x, y1, 0),
+    App.Vector(x, y2, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', 7, 2, 8, 1))
+constraintList.append(Sketcher.Constraint('Vertical', 8))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+    
+# Draw outer part of head insert
+y = pistonCrownRadius * math.cos(pistonCrownAngle) + ellipsoidHeight + sparkPlugThreadLength
+x1 = -sparkPlugSeatDiameter/2
+x2 = sparkPlugSeatDiameter/2
+line = Part.LineSegment(
+    App.Vector(x1, y, 0),
+    App.Vector(x2, y, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', 8, 2, 9, 1))
+constraintList.append(Sketcher.Constraint('Horizontal', 9))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
 
 
 
