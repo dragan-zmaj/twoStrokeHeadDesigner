@@ -1,4 +1,5 @@
-import math, FreeCAD, Part, Sketcher
+import math, Part, Sketcher
+import FreeCAD as App
 #import matplotlib.pyplot as plt
 from dataclasses import dataclass, asdict
 
@@ -154,6 +155,24 @@ del line, constraintList, y
 y = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight
 sketch.trim(2, App.Vector(0, y, 0))
 del y
+
+
+# Draw outer part of head insert
+x1 = -pistonCrownRadius * math.sin(pistonCrownAngle) 
+y = pistonCrownRadius * math.cos(pistonCrownAngle) 
+x2 = -outerHeadDiameter/2
+line = Part.LineSegment(
+    App.Vector(x1, y, 0),
+    App.Vector(x2, y, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', 1, 2, 5, 1))
+constraintList.append(Sketcher.Constraint('Horizontal', 5))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+    
 
 
 
