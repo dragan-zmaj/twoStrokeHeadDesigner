@@ -50,6 +50,7 @@ docker pull amrit3701/freecad-cli:latest
 
 docker run --rm amrit3701/freecad-cli:latest FreeCADCmd --version
 docker run -it amrit3701/freecad-cli:latest bash
+docker run --rm -it -v "$PWD":/workspace -w /workspace amrit3701/freecad-cli:latest bash
 
 ## Step 7: Run your script
 - this should be run from inside git repo in Ubuntu environment
