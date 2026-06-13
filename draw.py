@@ -90,6 +90,8 @@ sketch.MapMode = "FlatFace"
 
 
 # Add an squish band arc on the right side of the sketch
+cnt = 0
+idArc1 =cnt
 arc1 = Part.ArcOfCircle(
     Part.Circle(App.Vector(0,0,0), App.Vector(0,0,1), pistonCrownRadius),
     (math.pi/2 - pistonCrownAngle),
@@ -97,10 +99,12 @@ arc1 = Part.ArcOfCircle(
 )
 sketch.addGeometry([arc1], False)
 # Constrain arc endpoint to origin
-sketch.addConstraint(Sketcher.Constraint('Coincident', 0, 3, -1, 1))
+sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc1, 3, -2))
 
 
 # Add a squish band arc on the left side of the sketch
+cnt += 1
+idArc2 = cnt
 arc2 = Part.ArcOfCircle(
     Part.Circle(App.Vector(0,0,0), App.Vector(0,0,1), pistonCrownRadius),
     (math.pi/2 + squishBandAngle),
@@ -108,10 +112,12 @@ arc2 = Part.ArcOfCircle(
 )
 sketch.addGeometry([arc2], False)
 # Constrain arc endpoint to origin
-sketch.addConstraint(Sketcher.Constraint('Coincident', 1, 3, -1, 1))
+sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc2, 3, -2))
 
 
 # Add an ellipse representing the combustion chamber cross-section without spark plug cutout
+cnt += 1
+idEllipse = cnt
 ellipse = Part.Ellipse(
     App.Vector(pistonCrownRadius*math.sin(squishBandAngle),pistonCrownRadius*math.cos(squishBandAngle),0), 
     App.Vector(0,pistonCrownRadius*math.cos(squishBandAngle) + ellipsoidHeight,0), 
@@ -119,7 +125,7 @@ ellipse = Part.Ellipse(
 )
 sketch.addGeometry([ellipse], False)
 sketch.exposeInternalGeometry(2)
-sketch.addConstraint(Sketcher.Constraint('PointOnObject', 2, 3, -2))
+sketch.addConstraint(Sketcher.Constraint('PointOnObject', idEllipse, 3, -2))
 
 
 # Cut out lower part of the ellipse
@@ -130,6 +136,8 @@ sketch.trim(2, App.Vector(x, y, 0))
 
 
 # Draw a line where spark enters the chamber
+cnt += 1
+idCeilingLine = cnt
 y = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight*math.sqrt(1 - (sparkPlugRadius/chamberWidth)**2)
 line = Part.LineSegment(
     App.Vector(-sparkPlugRadius, y, 0),
@@ -137,21 +145,51 @@ line = Part.LineSegment(
 )
 sketch.addGeometry([line], False)
 constraintList = []
-constraintList.append(Sketcher.Constraint('PointOnObject', 3, 1, 2))
-constraintList.append(Sketcher.Constraint('PointOnObject', 3, 2, 2))
-constraintList.append(Sketcher.Constraint('Horizontal', 3))
+constraintList.append(Sketcher.Constraint('PointOnObject', idCeilingLine, 1, idEllipse))
+constraintList.append(Sketcher.Constraint('PointOnObject', idCeilingLine, 2, idEllipse))
+constraintList.append(Sketcher.Constraint('Horizontal', idCeilingLine))
 
 for constraint in constraintList:
     sketch.addConstraint(constraint)
 
 
-
 # Trim the ellipse above the spark plug line
 y = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight
-sketch.trim(2, App.Vector(0, y, 0))
+sketch.trim(idEllipse, App.Vector(0, y, 0))
+
+sketch.delGeometries([idArc2, (cnt+1)])
+
+idEllipse -= 1
+idCeilingLine -= 1
+
+# Draw vertical line - axis of rotation - it has the length of sparkPlugThreadLength
+cnt = max([idArc1, idEllipse, idCeilingLine]) + 1
+idAxisLine = cnt
+y = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight*math.sqrt(1 - (sparkPlugRadius/chamberWidth)**2)
+y1 = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight*math.sqrt(1 - (sparkPlugRadius/chamberWidth)**2)
+y2 = y1 + sparkPlugThreadLength
+line = Part.LineSegment(
+    App.Vector(0, y1, 0),
+    App.Vector(0, y2, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, idCeilingLine))
+constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, -2))
+constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 2, -2))
+#constraintList.append(Sketcher.Constraint('Vertical', idAxisLine))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+# trim ceiling line to axis line
+sketch.trim(idCeilingLine, App.Vector(-sparkPlugRadius/2, y1, 0))
+
 
 doc.recompute()
 
+
+'''
 # Draw outer part of head insert
 # 1
 x1 = -pistonCrownRadius * math.sin(pistonCrownAngle) 
@@ -311,7 +349,7 @@ for constraint in constraintList:
     sketch.addConstraint(constraint)
 
 doc.recompute()
-
+'''
 
 
 
