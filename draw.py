@@ -1,4 +1,4 @@
-import math, Part, Sketcher
+import math, Part, Sketcher, os
 import FreeCAD as App
 #import matplotlib.pyplot as plt
 from dataclasses import dataclass, asdict
@@ -278,11 +278,28 @@ for constraint in constraintList:
 doc.recompute()
 
 
+# After sketch is complete and closed
+body = doc.getObject('Body')
+revolution = body.newObject('PartDesign::Revolution', 'Revolution')
+revolution.Profile = (sketch, [''])
+revolution.ReferenceAxis = (sketch, ['V_Axis'])
+revolution.Angle = 360.0
+revolution.Reversed = 1
+doc.recompute()
 
 
-
-'''
 # Export to STEP file
-Part.export([box], "test_box.step")
-print("Test box created and exported as test_box.step")
-'''
+#body = App.ActiveDocument.getObject('Body')
+#Part.export([body], filename)
+#print("Test box created and exported as test_box.step")
+desktopPath = os.path.expanduser("~/Desktop")
+__objs__ = []
+__objs__.append(FreeCAD.getDocument("Unnamed").getObject("Body"))
+import ImportGui
+if hasattr(ImportGui, "exportOptions"):
+    options = ImportGui.exportOptions(f"{desktopPath}/{filename}.step")
+    ImportGui.export(__objs__, f"{desktopPath}/{filename}.step", options)
+else:
+    ImportGui.export(__objs__, f"{desktopPath}/{filename}.step")
+
+del __objs__
