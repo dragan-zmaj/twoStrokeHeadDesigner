@@ -24,7 +24,8 @@ Thumbs.db
 *.sqlite
 *.db
 
-# Ignore generated STEP files
+# Ignore generated STEP files or FCStd project
 *.step
 *.stp
+*.FCStd
 

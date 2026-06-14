@@ -89,6 +89,174 @@ sketch.AttachmentSupport = (doc.getObject("Origin"), ["XZ_Plane"])
 sketch.MapMode = "FlatFace"
 
 
+cnt = 0
+idArc =cnt
+arc = Part.ArcOfCircle(
+    Part.Circle(App.Vector(0,-pistonCrownRadius*math.cos(pistonCrownAngle),0), 
+                App.Vector(0,0,1), 
+                pistonCrownRadius),
+    (math.pi/2 - pistonCrownAngle),
+    (math.pi/2 - squishBandAngle)
+)
+sketch.addGeometry([arc], False)
+# Constrain arc endpoint to origin
+sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc, 3, -2)) #place center of arc on y-axis
+sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc, 1, -1)) #place startpoint of arc on x-axis
+
+
+# Add a squish band arc on the left side of the sketch
+cnt += 1
+idEllipse = cnt
+ellipse = Part.Ellipse(
+    App.Vector(pistonCrownRadius*math.sin(squishBandAngle),pistonCrownRadius*(math.cos(squishBandAngle) - math.cos(pistonCrownAngle)),0), 
+    App.Vector(0,pistonCrownRadius*(math.cos(squishBandAngle) - math.cos(pistonCrownAngle)) + ellipsoidHeight,0), 
+    App.Vector(0,pistonCrownRadius*(math.cos(squishBandAngle) - math.cos(pistonCrownAngle)),0), 
+)
+geometricAngle = math.atan(chamberHeight/sparkPlugRadius)
+parametricAngle = math.atan((0.5*chamberWidth * math.sin(geometricAngle))/(ellipsoidHeight * math.cos(geometricAngle)))
+arcEllipse = Part.ArcOfEllipse(ellipse, 0, parametricAngle)
+sketch.addGeometry([arcEllipse], False)
+# Constrain arc endpoint to origin
+sketch.addConstraint(Sketcher.Constraint('PointOnObject', idEllipse, 3, -2))
+sketch.addConstraint(Sketcher.Constraint('Coincident', idEllipse, 1, idArc, 2))
+
+# Draw a line where spark enters the chamber - ceiling line of the chamber, future hole with thread for spark plug will be cut out here
+cnt += 1
+idCeilingLine = cnt
+y = pistonCrownRadius*(math.cos(squishBandAngle) - math.cos(pistonCrownAngle)) + chamberHeight
+line = Part.LineSegment(
+    App.Vector(sparkPlugRadius, y, 0),
+    App.Vector(0, y, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+sketch.addConstraint(Sketcher.Constraint('Coincident', idCeilingLine, 1, idEllipse, 2))
+constraintList.append(Sketcher.Constraint('PointOnObject', idCeilingLine, 2, -2))
+constraintList.append(Sketcher.Constraint('Horizontal', idCeilingLine))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+# Draw vertical line - axis of rotation - it has the length of sparkPlugThreadLength
+cnt += 1
+idAxisLine = cnt
+y1 = pistonCrownRadius*(math.cos(squishBandAngle) - math.cos(pistonCrownAngle)) + chamberHeight
+y2 = y1 + sparkPlugThreadLength
+line = Part.LineSegment(
+    App.Vector(0, y1, 0),
+    App.Vector(0, y2, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, idCeilingLine))
+constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, -2))
+constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 2, -2))
+#constraintList.append(Sketcher.Constraint('Vertical', idAxisLine))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+# line for spark plug seat
+cnt += 1
+idSparkPlugSeatLine = cnt
+line = Part.LineSegment(
+    App.Vector(0, y2, 0),
+    App.Vector(sparkPlugSeatDiameter/2, y2, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', idAxisLine, 2, idSparkPlugSeatLine, 1))
+constraintList.append(Sketcher.Constraint('Horizontal', idSparkPlugSeatLine))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+# Outer line 1
+cnt += 1
+idOuterLine1 = cnt    
+y1 = y2
+y2 =  outerHeadHeight
+x = sparkPlugSeatDiameter/2
+line = Part.LineSegment(
+    App.Vector(x, y1, 0),
+    App.Vector(x, y2, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', idSparkPlugSeatLine, 2, idOuterLine1, 1))
+constraintList.append(Sketcher.Constraint('Vertical', idOuterLine1))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+# Outer Line 2
+cnt += 1
+idOuterLine2 = cnt
+y = outerHeadHeight
+x1 = sparkPlugSeatDiameter/2
+x2 = outerHeadDiameter/2
+line = Part.LineSegment(
+    App.Vector(x1, y, 0),
+    App.Vector(x2, y, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', idOuterLine1, 2, idOuterLine2, 1))
+constraintList.append(Sketcher.Constraint('Horizontal', idOuterLine2))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+# Outer Line 3
+cnt += 1
+idOuterLine3 = cnt
+y1 =  outerHeadHeight
+x = outerHeadDiameter/2
+line = Part.LineSegment(
+    App.Vector(x, y1, 0),
+    App.Vector(x, 0, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', idOuterLine2, 2, idOuterLine3, 1))
+constraintList.append(Sketcher.Constraint('Vertical', idOuterLine3))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+# Outer Line 4
+cnt += 1
+idOuterLine4 = cnt
+x2 = pistonCrownRadius * math.sin(pistonCrownAngle) 
+x1 = outerHeadDiameter/2
+line = Part.LineSegment(
+    App.Vector(x1, 0, 0),
+    App.Vector(x2, 0, 0)
+)
+sketch.addGeometry([line], False)
+constraintList = []
+constraintList.append(Sketcher.Constraint('Coincident', idOuterLine3, 2, idOuterLine4, 1))
+constraintList.append(Sketcher.Constraint('Horizontal', idOuterLine4))
+constraintList.append(Sketcher.Constraint('Coincident', idArc, 1, idOuterLine4, 2))
+
+for constraint in constraintList:
+    sketch.addConstraint(constraint)
+
+doc.recompute()
+
+'''# After sketch is complete and closed
+body = doc.getObject('Body')
+revolution = body.newObject('PartDesign::Revolution', 'Revolution')
+revolution.Profile = (sketch, [''])
+revolution.ReferenceAxis = (sketch, ['V_Axis'])
+revolution.Angle = 360.0
+revolution.Reversed = 1
+doc.recompute()'''
+
+doc.saveAs("combustion_chamber.FCStd")
+
+
+'''
 # Add an squish band arc on the right side of the sketch
 cnt = 0
 idArc1 =cnt
@@ -303,3 +471,4 @@ else:
     ImportGui.export(__objs__, f"{desktopPath}/{filename}.step")
 
 del __objs__
+'''
