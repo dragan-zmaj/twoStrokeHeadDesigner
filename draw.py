@@ -80,7 +80,7 @@ chamberHeight = math.sqrt(
 
 # Create document and body
 #doc = App.newDocument(f"CombustionHead_tCR{int(10*trappedCompressionRatio)}_B{int(bore)}_sqB{int(squishBandAreaRatio*100)}")
-doc = App.newDocument()
+doc = App.newDocument(filename)
 body = doc.addObject("PartDesign::Body", "Body")
 
 # Create sketch on XZ plane
@@ -294,7 +294,7 @@ doc.recompute()
 #print("Test box created and exported as test_box.step")
 desktopPath = os.path.expanduser("~/Desktop")
 __objs__ = []
-__objs__.append(FreeCAD.getDocument("Unnamed").getObject("Body"))
+__objs__.append(FreeCAD.getDocument(filename).getObject("Body"))
 import ImportGui
 if hasattr(ImportGui, "exportOptions"):
     options = ImportGui.exportOptions(f"{desktopPath}/{filename}.step")
