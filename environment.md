@@ -55,5 +55,5 @@ docker run --rm -it -v "$PWD":/workspace -w /workspace amrit3701/freecad-cli:lat
 ## Step 7: Run your script
 - this should be run from inside git repo in Ubuntu environment
 
-docker run --rm -v "$PWD":/workspace -w /workspace amrit3701/freecad-cli:latest FreeCADCmd draw.py
+docker run --rm -v "$PWD":/workspace -w /workspace amrit3701/freecad-cli:latest FreeCADCmd TwoStrokeHeadDesigner.py
 

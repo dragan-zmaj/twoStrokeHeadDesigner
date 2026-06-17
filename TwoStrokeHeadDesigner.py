@@ -1,4 +1,4 @@
-import math, Part, Sketcher, os
+import math, Part, Sketcher, os, time
 import FreeCAD as App
 #import matplotlib.pyplot as plt
 from dataclasses import dataclass, asdict
@@ -79,15 +79,10 @@ chamberHeight = math.sqrt(
 
 
 # Create document and body
-#doc = App.newDocument(f"CombustionHead_tCR{int(10*trappedCompressionRatio)}_B{int(bore)}_sqB{int(squishBandAreaRatio*100)}")
 doc = App.newDocument(filename)
-body = doc.addObject("PartDesign::Body", "Body")
 
-# Create sketch on XZ plane
-sketch = body.newObject("Sketcher::SketchObject", "Sketch")
-sketch.AttachmentSupport = (doc.getObject("Origin"), ["XZ_Plane"])
-sketch.MapMode = "FlatFace"
-
+sketch = doc.addObject("Sketcher::SketchObject", "Sketch")
+sketch.Placement = App.Placement(App.Vector(0, 0, 0), App.Rotation(App.Vector(0, 0, 1), 0))
 
 cnt = 0
 idArc =cnt
@@ -104,7 +99,7 @@ sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc, 3, -2)) #place 
 sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc, 1, -1)) #place startpoint of arc on x-axis
 
 
-# Add a squish band arc on the left side of the sketch
+# Add a ellipse arc on the left side of the sketch
 cnt += 1
 idEllipse = cnt
 ellipse = Part.Ellipse(
@@ -119,6 +114,8 @@ sketch.addGeometry([arcEllipse], False)
 # Constrain arc endpoint to origin
 sketch.addConstraint(Sketcher.Constraint('PointOnObject', idEllipse, 3, -2))
 sketch.addConstraint(Sketcher.Constraint('Coincident', idEllipse, 1, idArc, 2))
+
+#doc.recompute()
 
 # Draw a line where spark enters the chamber - ceiling line of the chamber, future hole with thread for spark plug will be cut out here
 cnt += 1
@@ -137,6 +134,8 @@ constraintList.append(Sketcher.Constraint('Horizontal', idCeilingLine))
 for constraint in constraintList:
     sketch.addConstraint(constraint)
 
+#doc.recompute()
+
 # Draw vertical line - axis of rotation - it has the length of sparkPlugThreadLength
 cnt += 1
 idAxisLine = cnt
@@ -151,10 +150,13 @@ constraintList = []
 constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, idCeilingLine))
 constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, -2))
 constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 2, -2))
+#sketch.toggleConstruction(idAxisLine)  # Make it construction geometry
 #constraintList.append(Sketcher.Constraint('Vertical', idAxisLine))
 
 for constraint in constraintList:
     sketch.addConstraint(constraint)
+
+#doc.recompute()
 
 # line for spark plug seat
 cnt += 1
@@ -170,6 +172,8 @@ constraintList.append(Sketcher.Constraint('Horizontal', idSparkPlugSeatLine))
 
 for constraint in constraintList:
     sketch.addConstraint(constraint)
+
+#doc.recompute()
 
 # Outer line 1
 cnt += 1
@@ -189,6 +193,8 @@ constraintList.append(Sketcher.Constraint('Vertical', idOuterLine1))
 for constraint in constraintList:
     sketch.addConstraint(constraint)
 
+#doc.recompute()
+
 # Outer Line 2
 cnt += 1
 idOuterLine2 = cnt
@@ -207,6 +213,8 @@ constraintList.append(Sketcher.Constraint('Horizontal', idOuterLine2))
 for constraint in constraintList:
     sketch.addConstraint(constraint)
 
+#doc.recompute()
+
 # Outer Line 3
 cnt += 1
 idOuterLine3 = cnt
@@ -224,6 +232,8 @@ constraintList.append(Sketcher.Constraint('Vertical', idOuterLine3))
 for constraint in constraintList:
     sketch.addConstraint(constraint)
 
+#doc.recompute()
+
 # Outer Line 4
 cnt += 1
 idOuterLine4 = cnt
@@ -234,241 +244,53 @@ line = Part.LineSegment(
     App.Vector(x2, 0, 0)
 )
 sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('Coincident', idOuterLine3, 2, idOuterLine4, 1))
-constraintList.append(Sketcher.Constraint('Horizontal', idOuterLine4))
-constraintList.append(Sketcher.Constraint('Coincident', idArc, 1, idOuterLine4, 2))
+sketch.addConstraint((Sketcher.Constraint('Coincident', idOuterLine3, 2, idOuterLine4, 1)))
+sketch.addConstraint(Sketcher.Constraint('Horizontal', idOuterLine4))
+sketch.addConstraint(Sketcher.Constraint('Coincident', idArc, 1, idOuterLine4, 2))
 
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
-
-doc.recompute()
-
-'''# After sketch is complete and closed
-body = doc.getObject('Body')
-revolution = body.newObject('PartDesign::Revolution', 'Revolution')
-revolution.Profile = (sketch, [''])
-revolution.ReferenceAxis = (sketch, ['V_Axis'])
-revolution.Angle = 360.0
-revolution.Reversed = 1
-doc.recompute()'''
-
-doc.saveAs("combustion_chamber.FCStd")
-
-
-'''
-# Add an squish band arc on the right side of the sketch
-cnt = 0
-idArc1 =cnt
-arc1 = Part.ArcOfCircle(
-    Part.Circle(App.Vector(0,0,0), App.Vector(0,0,1), pistonCrownRadius),
-    (math.pi/2 - pistonCrownAngle),
-    (math.pi/2 - squishBandAngle)
-)
-sketch.addGeometry([arc1], False)
-# Constrain arc endpoint to origin
-sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc1, 3, -2))
-
-
-# Add a squish band arc on the left side of the sketch
-cnt += 1
-idArc2 = cnt
-arc2 = Part.ArcOfCircle(
-    Part.Circle(App.Vector(0,0,0), App.Vector(0,0,1), pistonCrownRadius),
-    (math.pi/2 + squishBandAngle),
-    (math.pi/2 + pistonCrownAngle)
-)
-sketch.addGeometry([arc2], False)
-# Constrain arc endpoint to origin
-sketch.addConstraint(Sketcher.Constraint('PointOnObject', idArc2, 3, -2))
-
-
-# Add an ellipse representing the combustion chamber cross-section without spark plug cutout
-cnt += 1
-idEllipse = cnt
-ellipse = Part.Ellipse(
-    App.Vector(pistonCrownRadius*math.sin(squishBandAngle),pistonCrownRadius*math.cos(squishBandAngle),0), 
-    App.Vector(0,pistonCrownRadius*math.cos(squishBandAngle) + ellipsoidHeight,0), 
-    App.Vector(0,pistonCrownRadius*math.cos(squishBandAngle),0), 
-)
-sketch.addGeometry([ellipse], False)
-sketch.exposeInternalGeometry(2)
-sketch.addConstraint(Sketcher.Constraint('PointOnObject', idEllipse, 3, -2))
-
-
-# Cut out lower part of the ellipse
-y = pistonCrownRadius * math.cos(squishBandAngle) - chamberHeight
-x = chamberWidth * math.sqrt(1 - (chamberHeight/ellipsoidHeight)**2)
-sketch.trim(2, App.Vector(-x, y, 0))
-sketch.trim(2, App.Vector(x, y, 0))
-
-
-# Draw a line where spark enters the chamber
-cnt += 1
-idCeilingLine = cnt
-y = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight*math.sqrt(1 - (sparkPlugRadius/chamberWidth)**2)
-line = Part.LineSegment(
-    App.Vector(-sparkPlugRadius, y, 0),
-    App.Vector(sparkPlugRadius, y, 0)
-)
-sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('PointOnObject', idCeilingLine, 1, idEllipse))
-constraintList.append(Sketcher.Constraint('PointOnObject', idCeilingLine, 2, idEllipse))
-constraintList.append(Sketcher.Constraint('Horizontal', idCeilingLine))
-
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
-
-
-# Trim the ellipse above the spark plug line
-y = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight
-sketch.trim(idEllipse, App.Vector(0, y, 0))
-
-sketch.delGeometries([idArc2, (cnt+1)])
-
-idEllipse -= 1
-idCeilingLine -= 1
-
-# Draw vertical line - axis of rotation - it has the length of sparkPlugThreadLength
-cnt = max([idArc1, idEllipse, idCeilingLine]) + 1
-idAxisLine = cnt
-y1 = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight*math.sqrt(1 - (sparkPlugRadius/chamberWidth)**2)
-y2 = y1 + sparkPlugThreadLength
-line = Part.LineSegment(
-    App.Vector(0, y1, 0),
-    App.Vector(0, y2, 0)
-)
-sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, idCeilingLine))
-constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 1, -2))
-constraintList.append(Sketcher.Constraint('PointOnObject', idAxisLine, 2, -2))
-#constraintList.append(Sketcher.Constraint('Vertical', idAxisLine))
-
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
-
-# trim ceiling line to axis line
-sketch.trim(idCeilingLine, App.Vector(-sparkPlugRadius/2, y1, 0))
-
-# line for spark plug seat
-cnt += 1
-idSparkPlugSeatLine = cnt
-y = pistonCrownRadius * math.cos(squishBandAngle) + ellipsoidHeight*math.sqrt(1 - (sparkPlugRadius/chamberWidth)**2)
-x1 = 0
-x2 = sparkPlugSeatDiameter/2
-line = Part.LineSegment(
-    App.Vector(x1, y, 0),
-    App.Vector(x2, y, 0)
-)
-sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('Coincident', idAxisLine, 2, idSparkPlugSeatLine, 1))
-constraintList.append(Sketcher.Constraint('Horizontal', idSparkPlugSeatLine))
-
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
-
-# Outer line 1
-cnt += 1
-idOuterLine1 = cnt    
-y2 = pistonCrownRadius * math.cos(pistonCrownAngle) + outerHeadHeight
-y1 = pistonCrownRadius * math.cos(pistonCrownAngle) + ellipsoidHeight + sparkPlugThreadLength
-x = sparkPlugSeatDiameter/2
-line = Part.LineSegment(
-    App.Vector(x, y1, 0),
-    App.Vector(x, y2, 0)
-)
-sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('Coincident', idSparkPlugSeatLine, 2, idOuterLine1, 1))
-constraintList.append(Sketcher.Constraint('Vertical', idOuterLine1))
-
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
-
-# Outer Line 2
-cnt += 1
-idOuterLine2 = cnt
-y = pistonCrownRadius * math.cos(pistonCrownAngle) + outerHeadHeight
-x2 = outerHeadDiameter/2
-x1 = sparkPlugSeatDiameter/2
-line = Part.LineSegment(
-    App.Vector(x1, y, 0),
-    App.Vector(x2, y, 0)
-)
-sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('Coincident', idOuterLine1, 2, idOuterLine2, 1))
-constraintList.append(Sketcher.Constraint('Horizontal', idOuterLine2))
-
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
-
-# Outer Line 3
-cnt += 1
-idOuterLine3 = cnt
-y2 = pistonCrownRadius * math.cos(pistonCrownAngle)
-y1 = pistonCrownRadius * math.cos(pistonCrownAngle) + outerHeadHeight
-x = outerHeadDiameter/2
-line = Part.LineSegment(
-    App.Vector(x, y1, 0),
-    App.Vector(x, y2, 0)
-)
-sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('Coincident', idOuterLine2, 2, idOuterLine3, 1))
-constraintList.append(Sketcher.Constraint('Vertical', idOuterLine3))
-
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
-
-cnt += 1
-idOuterLine4 = cnt
-x2 = pistonCrownRadius * math.sin(pistonCrownAngle) 
-y = pistonCrownRadius * math.cos(pistonCrownAngle) 
-x1 = outerHeadDiameter/2
-line = Part.LineSegment(
-    App.Vector(x1, y, 0),
-    App.Vector(x2, y, 0)
-)
-sketch.addGeometry([line], False)
-constraintList = []
-constraintList.append(Sketcher.Constraint('Coincident', idOuterLine3, 2, idOuterLine4, 1))
-constraintList.append(Sketcher.Constraint('Horizontal', idOuterLine4))
-constraintList.append(Sketcher.Constraint('Coincident', idArc1, 1, idOuterLine4, 2))
-
-for constraint in constraintList:
-    sketch.addConstraint(constraint)
 
 
 doc.recompute()
 
 
-# After sketch is complete and closed
-body = doc.getObject('Body')
-revolution = body.newObject('PartDesign::Revolution', 'Revolution')
-revolution.Profile = (sketch, [''])
-revolution.ReferenceAxis = (sketch, ['V_Axis'])
-revolution.Angle = 360.0
-revolution.Reversed = 1
-doc.recompute()
+# === CREATE REVOLUTION USING PART WORKBENCH ===
 
+# Get the sketch shape
+sketchShape = sketch.Shape
+
+wire = max(sketchShape.Wires)
+
+# Revolve around Y-axis (sketch is in XZ plane)
+revShape = wire.revolve(
+    App.Vector(0, 0, 0),  # Point on axis
+    App.Vector(0, 1, 0),  # Direction (Y-axis)
+    360.0  # Angle
+)
+
+# Create Part object
+revolution = doc.addObject('Part::Feature', 'Revolution')
+revolution.Shape = revShape
+doc.purgeTouched()
+doc.recompute()
+sketch.Visibility = False
+doc.getObject('Revolution').Visibility = True
+
+doc.saveAs(f"{filename}.FCStd")
 
 # Export to STEP file
-#body = App.ActiveDocument.getObject('Body')
-#Part.export([body], filename)
+body = App.ActiveDocument.getObject('Revolution')
+Part.export([body], f'{filename}.step')
 #print("Test box created and exported as test_box.step")
-desktopPath = os.path.expanduser("~/Desktop")
-__objs__ = []
-__objs__.append(FreeCAD.getDocument(filename).getObject("Body"))
-import ImportGui
-if hasattr(ImportGui, "exportOptions"):
-    options = ImportGui.exportOptions(f"{desktopPath}/{filename}.step")
-    ImportGui.export(__objs__, f"{desktopPath}/{filename}.step", options)
-else:
-    ImportGui.export(__objs__, f"{desktopPath}/{filename}.step")
 
-del __objs__
-'''
+# === EXPORT TO STL  ===
+stl_file = f"{filename}.stl"
+try:
+    if body and hasattr(body, 'Shape'):
+        import Mesh
+        mesh_obj = Mesh.Mesh(body.Shape.tessellate(0.1))
+        mesh_obj.write(stl_file)
+        print(f"[OK] STL file exported: {stl_file}")
+except Exception as e:
+    print(f"[ERROR] Failed to export STL: {e}")
+
+print("\n=== DONE ===")
